@@ -5,8 +5,9 @@ header { background:var(--vert); color:#fff; padding:1.2rem 2rem; }
 header h1 { margin:0; }
 header p { margin:.3rem 0 0; opacity:.9; }
 nav#tabs { display:flex; flex-wrap:wrap; background:#e8e4d8; }
-nav#tabs .tab { flex:1 1 auto; padding:.8rem 1rem; border:none; background:transparent; font-size:1rem; cursor:pointer; }
-nav#tabs .tab.active { background:var(--beige); font-weight:600; border-bottom:3px solid var(--vert); }
+nav#tabs { background:#e8e4d8; }
+nav#tabs .tab { flex:1 1 auto; padding:.8rem 1rem; border:none; background:transparent; font-size:1rem; color:#000; cursor:pointer; }
+nav#tabs .tab.active { background:var(--beige); color:#000; font-weight:700; border-bottom:3px solid var(--vert); }
 main { max-width:900px; margin:0 auto; padding:1.5rem; }
 .panel { display:none; }
 .panel.active { display:block; }
