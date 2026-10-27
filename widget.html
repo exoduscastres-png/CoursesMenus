@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Widget MenuSaison</title>
+<link rel="stylesheet" href="css/widget.css">
+</head>
+<body>
+<div id="widget">
+  <div class="w-header">🥗 Menu du jour</div>
+  <div class="w-courses">
+    <input type="text" id="wInput" placeholder="Ajouter un ingrédient…">
+    <button id="wAdd">+</button>
+  </div>
+  <div id="wListe" class="w-tags"></div>
+  <button id="wGenerer" class="w-generer">Générer le menu</button>
+  <div id="wResultat" class="w-resultat"></div>
+</div>
+<script src="js/data/season.js"></script>
+<script src="js/data/recipes.js"></script>
+<script src="js/app.js"></script>
+<script>
+// Widget : réutilise l'état de app.js (courses/profil localStorage) en mode silencieux
+const wCourses = JSON.parse(localStorage.getItem("menusaison_courses") || "[]");
+const wProfil = JSON.parse(localStorage.getItem("menusaison_profil") || "null") ||
+  { nom:"Moi", cuisine:"mixte", regime:"flexitarien", contreIndications: [] };
+
+function wAffiche() {
+  const ul = document.getElementById("wListe");
+  ul.innerHTML = "";
+  wCourses.forEach((ing, i) => {
+    const s = document.createElement("span");
+    s.textContent = ing + " ✕";
+    s.onclick = () => { wCourses.splice(i,1); localStorage.setItem("menusaison_courses", JSON.stringify(wCourses)); wAffiche(); };
+    ul.appendChild(s);
+  });
+}
+document.getElementById("wAdd").onclick = () => {
+  const inp = document.getElementById("wInput");
+  inp.value.split(",").map(s=>s.trim()).filter(Boolean).forEach(v => {
+    if (!wCourses.some(c => c.toLowerCase() === v.toLowerCase())) wCourses.push(v);
+  });
+  localStorage.setItem("menusaison_courses", JSON.stringify(wCourses));
+  inp.value = ""; wAffiche();
+};
+document.getElementById("wInput").addEventListener("keydown", e => { if (e.key === "Enter") document.getElementById("wAdd").click(); });
+
+document.getElementById("wGenerer").onclick = () => {
+  profil = wProfil;
+  const m = new Date().getMonth();
+  const pool = RECETTES.filter(r => {
+    if (profil.regime === "vegetarien" && r.regime === "flexitarien") return false;
+    const cuisines = profil.cuisine === "mixte" ? ["francaise","algerienne","marocaine","mixte"] : [profil.cuisine,"mixte"];
+    if (!cuisines.includes(r.cuisine)) return false;
+    if (r.mois !== "toute" && !r.mois.includes(m)) return false;
+    return !(profil.contreIndications || []).some(ci => (r.eviter||[]).includes(ci));
+  });
+  const plats = ["proteines","feculents","legumes"].map(cat => {
+    const c = pool.filter(r => r.categorie === cat && r.type === "plat");
+    return c.length ? c[Math.floor(Math.random()*c.length)] : null;
+  }).filter(Boolean);
+  const manquants = new Set();
+  plats.forEach(r => r.ingredients.forEach(i => {
+    if (!wCourses.some(c => c.toLowerCase().includes(i.toLowerCase()) || i.toLowerCase().includes(c.toLowerCase()))) manquants.add(i);
+  }));
+  document.getElementById("wResultat").innerHTML =
+    plats.map(r => `<div class="w-plat"><strong>${r.nom}</strong></div>`).join("") +
+    (manquants.size ? `<div class="w-manque">🛒 À acheter : ${[...manquants].slice(0,6).join(", ")}</div>` : "");
+};
+wAffiche();
+</script>
+</body>
+</html>

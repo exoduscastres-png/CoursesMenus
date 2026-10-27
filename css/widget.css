@@ -1,0 +1,11 @@
+#widget { max-width:360px; border:1px solid #3a7d44; border-radius:10px; overflow:hidden; font-family:'Segoe UI',system-ui,sans-serif; background:#fff; margin:1rem auto; }
+.w-header { background:var(--vert); background:#3a7d44; color:#fff; padding:.6rem .9rem; font-weight:600; }
+.w-courses { display:flex; gap:.3rem; padding:.5rem .7rem; }
+.w-courses input { flex:1; padding:.35rem; border:1px solid #ccc; border-radius:5px; }
+.w-courses button { background:#3a7d44; color:#fff; border:none; border-radius:5px; padding:.35rem .7rem; cursor:pointer; }
+.w-tags { padding:0 .7rem; display:flex; flex-wrap:wrap; gap:.3rem; }
+.w-tags span { background:#e8f2e9; border:1px solid #3a7d44; border-radius:12px; padding:.1rem .5rem; font-size:.8rem; cursor:pointer; }
+.w-generer { display:block; width:calc(100% - 1.4rem); margin:.6rem .7rem; background:#b3402e; color:#fff; border:none; border-radius:6px; padding:.5rem; cursor:pointer; font-size:.95rem; }
+.w-resultat { padding:.5rem .9rem .8rem; }
+.w-plat { border-left:3px solid #3a7d44; padding-left:.5rem; margin:.35rem 0; }
+.w-manque { font-size:.8rem; color:#666; margin-top:.4rem; }

@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>MenuSaison — Menus à partir de vos courses</title>
+<link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+<header>
+  <h1>🥗 MenuSaison</h1>
+  <p>Des menus équilibrés et de saison, à partir de vos courses</p>
+</header>
+
+<nav id="tabs">
+  <button class="tab active" data-tab="courses">🛒 Mes courses</button>
+  <button class="tab" data-tab="saison">🌿 Produits de saison</button>
+  <button class="tab" data-tab="profil">👤 Mon profil</button>
+  <button class="tab" data-tab="menus">🍽️ Mes menus</button>
+</nav>
+
+<main>
+  <!-- ONGLET COURSES -->
+  <section id="courses" class="panel active">
+    <h2>Saisie manuelle</h2>
+    <div class="input-row">
+      <input type="text" id="ingredientInput" placeholder="Ex : courgettes, lentilles, poulet…">
+      <button id="addIngredient">Ajouter</button>
+    </div>
+    <h2>Photo du ticket</h2>
+    <input type="file" id="ticketFile" accept="image/*">
+    <div id="ocrStatus"></div>
+    <h3>Ma liste de courses détectée / saisie</h3>
+    <ul id="ingredientList"></ul>
+    <button id="clearCourses" class="danger">Vider la liste</button>
+  </section>
+
+  <!-- ONGLET SAISON -->
+  <section id="saison" class="panel">
+    <h2 id="saisonTitre"></h2>
+    <div id="saisonProduits"></div>
+    <p class="hint">Cliquez sur un produit pour l'ajouter à vos courses.</p>
+  </section>
+
+  <!-- ONGLET PROFIL -->
+  <section id="profil" class="panel">
+    <h2>Mon profil alimentaire</h2>
+    <label>Nom du profil : <input type="text" id="profilNom" placeholder="Ex : Famille, Nadia…"></label>
+    <fieldset>
+      <legend>Style de cuisine</legend>
+      <label><input type="radio" name="cuisine" value="francaise" checked> Traditionnelle française</label>
+      <label><input type="radio" name="cuisine" value="algerienne"> Traditionnelle algérienne</label>
+      <label><input type="radio" name="cuisine" value="marocaine"> Traditionnelle marocaine</label>
+      <label><input type="radio" name="cuisine" value="mixte"> Mixte / varié</label>
+    </fieldset>
+    <fieldset>
+      <legend>Régime</legend>
+      <label><input type="radio" name="regime" value="flexitarien" checked> Flexitarien</label>
+      <label><input type="radio" name="regime" value="vegetarien"> Végétarien</label>
+    </fieldset>
+    <fieldset>
+      <legend>Contre-indications</legend>
+      <label><input type="checkbox" name="ci" value="gluten"> Sans gluten</label>
+      <label><input type="checkbox" name="ci" value="lactose"> Sans lactose</label>
+      <label><input type="checkbox" name="ci" value="arachide"> Allergie arachide</label>
+      <label><input type="checkbox" name="ci" value="fruitscoque"> Allergie fruits à coque</label>
+      <label><input type="checkbox" name="ci" value="hypertension"> Hypertension (sans sel ajouté)</label>
+      <label><input type="checkbox" name="ci" value="diabete"> Diabète (index glycémique bas)</label>
+    </fieldset>
+    <button id="saveProfil">Enregistrer le profil</button>
+    <div id="profilMsg"></div>
+  </section>
+
+  <!-- ONGLET MENUS -->
+  <section id="menus" class="panel">
+    <div class="menu-controls">
+      <label>Nombre de jours : <input type="number" id="nbJours" value="7" min="1" max="14"></label>
+      <label><input type="checkbox" id="inclureWeb" checked> Enrichir avec des recettes du web (TheMealDB)</label>
+      <button id="genererMenus">Générer mes menus</button>
+    </div>
+    <div id="menusResultat"></div>
+  </section>
+</main>
+
+<script src="https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js"></script>
+<script src="js/data/season.js"></script>
+<script src="js/data/recipes.js"></script>
+<script src="js/app.js"></script>
+</body>
+</html>
