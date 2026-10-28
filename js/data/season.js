@@ -16,6 +16,26 @@ const SAISON_MOIS = {
 
 function moisCourant() { return ["Janvier","Février","Mars","Avril","Mai","Juin","Juillet","Août","Septembre","Octobre","Novembre","Décembre"][new Date().getMonth()]; }
 
+// Vue par saison (hémisphère nord) : mois + exemples de fruits et légumes
+const SAISON_ANNEE = {
+  "Hiver (décembre, janvier, février)": {
+    fruits: ["Clémentine", "Orange", "Pomme", "Poire", "Kiwi", "Citron", "Châtaigne"],
+    legumes: ["Poireau", "Carotte", "Endive", "Chou-fleur", "Citrouille", "Navet", "Épinard", "Salsifis", "Mâche", "Topinambour", "Panais", "Champignon"]
+  },
+  "Printemps (mars, avril, mai)": {
+    fruits: ["Pomme", "Poire", "Fraise", "Rhubarbe", "Cerise (fin mai)", "Citron"],
+    legumes: ["Asperge", "Épinard", "Radis", "Petits pois", "Artichaut", "Fève", "Carotte", "Chou-fleur", "Laitue", "Céleri", "Navet nouveau"]
+  },
+  "Été (juin, juillet, août)": {
+    fruits: ["Abricot", "Melon", "Pastèque", "Pêche", "Nectarine", "Cerise", "Framboise", "Myrtille", "Groseille", "Prune", "Figue (fin août)"],
+    legumes: ["Tomate", "Courgette", "Aubergine", "Poivron", "Haricot vert", "Concombre", "Petit pois", "Artichaut", "Salade", "Fenouil", "Épinard", "Maïs", "Betterave"]
+  },
+  "Automne (septembre, octobre, novembre)": {
+    fruits: ["Raisin", "Pomme", "Poire", "Prune", "Coing", "Figue", "Châtaigne", "Noix", "Mûre", "Melon (sept.)"],
+    legumes: ["Courge", "Citrouille", "Potimarron", "Chou-fleur", "Chou", "Poireau", "Betterave", "Champignon", "Endive", "Épinard", "Navet", "Radis noir", "Salsifis", "Fenouil", "Salade"]
+  }
+};
+
 // Classification nutritionnelle simplifiée
 const CATEGORIES = {
   proteines: ["poulet","dinde","bœuf","agneau","poisson","cabillaud","saumon","thon","crevette","œuf","fromage","yaourt","tofu","lentilles","pois chiches","haricots secs","steak","viande hachée","colin","merlan","sardine","escalope","côtelette","merguez"],

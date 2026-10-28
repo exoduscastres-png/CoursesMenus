@@ -21,7 +21,10 @@ button:hover { filter:brightness(1.1); }
 #ingredientList li:hover { background:#fdd; }
 fieldset { margin:1rem 0; border:1px solid #ccc; border-radius:8px; }
 fieldset label { display:block; margin:.3rem 0; }
-#saisonProduits { display:grid; grid-template-columns:repeat(auto-fill,minmax(140px,1fr)); gap:.5rem; }
+#saisonProduits h3 { color:var(--brun); margin:1.2rem 0 .4rem; }
+#saisonProduits h3.saison-titre { background:var(--vert); color:#fff; padding:.5rem .7rem; border-radius:6px; margin-top:1.5rem; }
+#saisonProduits h4 { margin:.4rem 0 .3rem; color:#555; }
+.saison-grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(130px,1fr)); gap:.5rem; }
 .prod-saison { background:#fff; border:1px solid var(--vert); border-radius:8px; padding:.5rem; text-align:center; cursor:pointer; }
 .prod-saison:hover { background:#e8f2e9; }
 .hint { color:#666; font-style:italic; }

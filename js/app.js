@@ -79,20 +79,46 @@ document.getElementById("ticketFile").addEventListener("change", async (e) => {
 });
 
 // ---------- Saison ----------
+function creerProd(p) {
+  const div = document.createElement("div");
+  div.className = "prod-saison";
+  div.textContent = p;
+  div.onclick = () => {
+    if (!courses.some(c => c.toLowerCase() === p.toLowerCase())) { courses.push(p); sauvegarderCourses(); }
+    afficherCourses();
+  };
+  return div;
+}
+
 function afficherSaison() {
   const m = moisCourant();
   document.getElementById("saisonTitre").textContent = `🌿 En saison — ${m}`;
   const cont = document.getElementById("saisonProduits");
   cont.innerHTML = "";
-  [...SAISON_MOIS[m].legumes, ...SAISON_MOIS[m].fruits].forEach(p => {
-    const div = document.createElement("div");
-    div.className = "prod-saison";
-    div.textContent = p;
-    div.onclick = () => {
-      if (!courses.some(c => c.toLowerCase() === p.toLowerCase())) { courses.push(p); sauvegarderCourses(); }
-      afficherCourses();
-    };
-    cont.appendChild(div);
+  ["legumes", "fruits"].forEach(type => {
+    const h = document.createElement("h3");
+    h.textContent = type === "legumes" ? "🥕 Légumes" : "🍎 Fruits";
+    cont.appendChild(h);
+    const grid = document.createElement("div");
+    grid.className = "saison-grid";
+    SAISON_MOIS[m][type].forEach(p => grid.appendChild(creerProd(p)));
+    cont.appendChild(grid);
+  });
+
+  Object.entries(SAISON_ANNEE).forEach(([nomSaison, data]) => {
+    const h = document.createElement("h3");
+    h.className = "saison-titre";
+    h.textContent = nomSaison;
+    cont.appendChild(h);
+    ["legumes", "fruits"].forEach(type => {
+      const sous = document.createElement("h4");
+      sous.textContent = type === "legumes" ? "Légumes :" : "Fruits :";
+      cont.appendChild(sous);
+      const grid = document.createElement("div");
+      grid.className = "saison-grid";
+      data[type].forEach(p => grid.appendChild(creerProd(p)));
+      cont.appendChild(grid);
+    });
   });
 }
 
