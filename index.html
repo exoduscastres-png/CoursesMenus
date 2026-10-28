@@ -75,6 +75,12 @@
   <section id="menus" class="panel">
     <div class="menu-controls">
       <label>Nombre de jours : <input type="number" id="nbJours" value="7" min="1" max="14"></label>
+      <fieldset class="repas-choix">
+        <legend>Repas</legend>
+        <label><input type="checkbox" id="repasPdj" checked> Petit déjeuner</label>
+        <label><input type="checkbox" id="repasDej" checked> Déjeuner</label>
+        <label><input type="checkbox" id="repasDiner" checked> Dîner</label>
+      </fieldset>
       <label><input type="checkbox" id="inclureWeb" checked> Enrichir avec des recettes du web (TheMealDB)</label>
       <button id="genererMenus">Générer mes menus</button>
     </div>

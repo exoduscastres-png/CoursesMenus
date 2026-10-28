@@ -5,6 +5,18 @@
 // saisons: mois (index 0-11) ou "toute" 
 // ci: contre-indications respectées implicitement via "eviter" (ingrédients interdits présents dans la recette)
 const RECETTES = [
+  { nom:"Tartines beurre-confiture", cuisine:"francaise", regime:"vegetarien", categorie:"feculents", type:"petitdej", mois:"toute", ingredients:["pain","beurre","confiture"], eviter:["gluten","lactose"] },
+  { nom:"Tartines de confiture", cuisine:"francaise", regime:"vegetarien", categorie:"feculents", type:"petitdej", mois:"toute", ingredients:["pain","confiture"], eviter:["gluten"] },
+  { nom:"Yaourt, céréales et fruits de saison", cuisine:"mixte", regime:"vegetarien", categorie:"feculents", type:"petitdej", mois:"toute", ingredients:["yaourt","céréales","fruit","miel"], eviter:["lactose"] },
+  { nom:"Porridge aux fruits de saison", cuisine:"mixte", regime:"vegetarien", categorie:"feculents", type:"petitdej", mois:"toute", ingredients:["avoine","lait","fruit"], eviter:["lactose"] },
+  { nom:"Œufs sur le plat et tartines", cuisine:"francaise", regime:"vegetarien", categorie:"proteines", type:"petitdej", mois:"toute", ingredients:["œuf","pain","beurre"], eviter:["gluten","lactose"] },
+  { nom:"Fromage frais, miel et pain", cuisine:"mixte", regime:"vegetarien", categorie:"proteines", type:"petitdej", mois:"toute", ingredients:["fromage","miel","pain"], eviter:["gluten","lactose"] },
+  { nom:"Pain, huile d'olive et fruits de saison", cuisine:"algerienne", regime:"vegetarien", categorie:"feculents", type:"petitdej", mois:"toute", ingredients:["pain","huile d'olive","fruit"], eviter:["gluten"] },
+  { nom:"Chakchouka (œufs à la tomate)", cuisine:"algerienne", regime:"vegetarien", categorie:"proteines", type:"petitdej", mois:[5,6,7,8,9,10], ingredients:["œuf","tomates","poivron","oignon","huile d'olive"], eviter:[] },
+  { nom:"Kesra et dattes au miel", cuisine:"algerienne", regime:"vegetarien", categorie:"feculents", type:"petitdej", mois:"toute", ingredients:["semoule","miel","datte"], eviter:["gluten"] },
+  { nom:"Baghrir (crêpes mille trous)", cuisine:"algerienne", regime:"vegetarien", categorie:"feculents", type:"petitdej", mois:"toute", ingredients:["semoule","farine","levure","miel","beurre"], eviter:["gluten","lactose"] },
+  { nom:"Msemen au miel", cuisine:"marocaine", regime:"vegetarien", categorie:"feculents", type:"petitdej", mois:"toute", ingredients:["farine","semoule","miel","beurre"], eviter:["gluten","lactose"] },
+  { nom:"Bissara (soupe de pois cassés)", cuisine:"marocaine", regime:"vegetarien", categorie:"feculents", type:"petitdej", mois:[0,1,2,9,10,11], ingredients:["pois cassés","ail","huile d'olive","cumin"], eviter:[] },
   { nom:"Ratatouille provençale", cuisine:"francaise", regime:"vegetarien", categorie:"legumes", type:"plat", mois:[5,6,7,8,9], ingredients:["courgettes","aubergine","poivron","tomates","oignon","ail","huile d'olive"], eviter:[] },
   { nom:"Potage de légumes d'hiver", cuisine:"francaise", regime:"vegetarien", categorie:"legumes", type:"entree", mois:[0,1,10,11], ingredients:["poireau","carottes","navet","pommes de terre","oignon"], eviter:[] },
   { nom:"Gratin de pommes de terre", cuisine:"francaise", regime:"vegetarien", categorie:"feculents", type:"plat", mois:"toute", ingredients:["pommes de terre","crème","fromage","ail"], eviter:["lactose"] },

@@ -30,7 +30,9 @@ fieldset label { display:block; margin:.3rem 0; }
 .hint { color:#666; font-style:italic; }
 .menu-controls { background:#fff; padding:1rem; border-radius:8px; border:1px solid #ccc; display:flex; flex-wrap:wrap; gap:1rem; align-items:center; }
 .jour-menu { background:#fff; border:1px solid #ccc; border-radius:8px; padding:1rem; margin:1rem 0; }
-.jour-menu h3 { margin-top:0; color:var(--brun); }
+.repas-titre { color:var(--brun); margin:.8rem 0 .3rem; border-bottom:1px solid #e0d8c8; padding-bottom:.2rem; }
+.menu-controls fieldset.repas-choix { margin:0; padding:.4rem .6rem; display:flex; flex-direction:column; gap:.2rem; }
+.jour-menu h4.repas-titre:first-of-type { margin-top:.3rem; }
 .recette { border-left:4px solid var(--vert); padding-left:.8rem; margin:.6rem 0; }
 .tag { display:inline-block; font-size:.75rem; background:var(--vert); color:#fff; border-radius:10px; padding:.1rem .5rem; margin-left:.4rem; }
 .tag.alerte { background:var(--rouge); }

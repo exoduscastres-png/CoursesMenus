@@ -180,60 +180,76 @@ async function recettesWeb() {
     const data = await rep.json();
     pool = (data.meals || []).filter(m => m.strArea !== "British");
   } catch (e) { return []; }
-  const candidates = pool.filter(m => !utilisees.has(m.idMeal)).slice(0, 5);
+  const candidates = pool.filter(m => !utilisees.has(m.idMeal)).slice(0, 8);
   candidates.forEach(m => utilisees.add(m.idMeal));
   localStorage.setItem("menusaison_web", JSON.stringify([...utilisees]));
   return candidates.map(m => ({
     nom: m.strMeal, cuisine: "mixte", regime: "flexitarien",
     categorie: (m.strCategory || "").toLowerCase().includes("veget") ? "legumes" : "proteines",
     type: "plat", mois: "toute", web: true,
-    ingredients: Object.keys(m).filter(k => k.startsWith("strIngredient") && m[k]).map(k => m[k].toLowerCase()),
+    ingredients: Object.keys(m).filter(k => k.startsWith("strIngredient") && m[k]).map(k => m[k].toLowerCase()).map(traduire),
     eviter: [], lien: m.strSource || `https://www.themealdb.com/meal/${m.idMeal}`
   }));
 }
 
 // ---------- Génération des menus ----------
+const STRUCTURE_REPAS = {
+  "petitdej":   { label:"☕ Petit déjeuner", cats:["feculents","proteines","fruits"] },
+  "dej":       { label:"🍽️ Déjeuner", cats:["entree","proteines","feculents","legumes","dessert"] },
+  "diner":     { label:"🌙 Dîner", cats:["proteines","legumes","feculents"] }
+};
+
 document.getElementById("genererMenus").addEventListener("click", async () => {
   if (courses.length === 0) { alert("Ajoutez d'abord vos courses (onglet « Mes courses »)."); return; }
   profil = profil || { nom: "Moi", cuisine: "mixte", regime: "flexitarien", contreIndications: [] };
   const nbJours = Math.min(14, Math.max(1, parseInt(document.getElementById("nbJours").value) || 7));
+  const repasChoisis = ["petitdej","dej","diner"].filter(r => document.getElementById("repas" + {petitdej:"Pdj",dej:"Dej",diner:"Diner"}[r]).checked);
+  if (repasChoisis.length === 0) { alert("Cochez au moins un repas (petit déjeuner, déjeuner ou dîner)."); return; }
   const cont = document.getElementById("menusResultat");
   cont.innerHTML = "<p>Génération en cours…</p>";
 
-  let locales = RECETTES.filter(recetteCompatible);
-  let web = document.getElementById("inclureWeb").checked ? await recettesWeb() : [];
-  web = web.filter(recetteCompatible);
+  const mois = new Date().getMonth();
+  let locales = RECETTES.filter(recetteCompatible).filter(r => recetteDeSaison(r, mois));
+  let web = document.getElementById("inclureWeb").checked ? (await recettesWeb()).filter(recetteCompatible).filter(r => recetteDeSaison(r, mois)) : [];
   const pool = [...locales, ...web];
 
-  if (pool.length === 0) { cont.innerHTML = "<p>Aucune recette ne correspond à votre profil. Assouplissez vos contre-indications.</p>"; return; }
+  if (pool.length === 0) { cont.innerHTML = "<p>Aucune recette de saison ne correspond à votre profil. Décochez « recettes du web », assouplissez vos contre-indications, ou attendez la saison !</p>"; return; }
 
-  const scorees = pool.map(r => ({ r, s: scoreSaison(r) * 2 + scoreCourses(r) * 3 + Math.random() }))
-                       .sort((a, b) => b.s - a.s).map(x => x.r);
+  // Mélange pour varier à chaque génération, en privilégiant saison + courses
+  const melange = pool.map(r => ({ r, s: scoreSaison(r) * 2 + scoreCourses(r) * 3 + Math.random() }))
+                      .sort((a, b) => b.s - a.s).map(x => x.r);
+  // Variété : re-mélanger légèrement pour ne pas toujours proposer la même
+  const tirage = (liste, n) => { const copie = [...liste]; const res = []; while (res.length < n && copie.length) { res.push(copie.splice(Math.floor(Math.random()*copie.length),1)[0]); } return res; };
 
   const jours = ["Lundi","Mardi","Mercredi","Jeudi","Vendredi","Samedi","Dimanche"];
-  const prixCategories = ["proteines", "feculents", "legumes"];
   let html = "";
   for (let j = 0; j < nbJours; j++) {
     const jour = jours[j % 7];
     html += `<div class="jour-menu"><h3>${jour}${j >= 7 ? " (semaine 2)" : ""}</h3>`;
-    let manquants = new Set();
-    prixCategories.forEach(cat => {
-      const cands = scorees.filter(r => r.categorie === cat && r.type === "plat");
-      const recette = cands[j % Math.max(1, cands.length)] || scorees[j % scorees.length];
-      if (recette) {
+    let manquantsJour = new Set();
+    repasChoisis.forEach(repas => {
+      const structure = STRUCTURE_REPAS[repas];
+      html += `<h4 class="repas-titre">${structure.label}</h4>`;
+      structure.cats.forEach(cat => {
+        let cands;
+        if (cat === "entree") cands = melange.filter(r => r.type === "entree");
+        else if (cat === "dessert") cands = melange.filter(r => r.type === "dessert");
+        else cands = melange.filter(r => r.categorie === cat && r.type !== "entree" && r.type !== "dessert" && r.type !== "petitdej");
+        if (repas === "petitdej") cands = melange.filter(r => r.type === "petitdej");
+        if (cands.length === 0) return;
+        const recette = tirage(cands, 1)[0];
         recette.ingredients.forEach(i => {
-          if (!courses.some(c => c.toLowerCase().includes(i.toLowerCase()) || i.toLowerCase().includes(c.toLowerCase()))) manquants.add(i);
+          if (!courses.some(c => c.toLowerCase().includes(i.toLowerCase()) || i.toLowerCase().includes(c.toLowerCase()))) manquantsJour.add(i);
         });
-        html += `<div class="recette"><strong>${recette.nom}</strong><span class="tag">${cat}</span>${recette.web ? `<span class="tag">web</span> <a href="${recette.lien}" target="_blank">voir la recette</a>` : ""}</div>`;
-      }
+        html += `<div class="recette"><strong>${recette.nom}</strong>${recette.web ? `<span class="tag">web</span> <a href="${recette.lien}" target="_blank">voir la recette</a>` : ""}</div>`;
+      });
     });
-    const dessert = scorees.filter(r => r.type === "dessert")[j % 2] || scorees.find(r => r.type === "dessert");
-    if (dessert) html += `<div class="recette"><strong>${dessert.nom}</strong><span class="tag">dessert</span></div>`;
-    if (manquants.size) html += `<p class="hint">🛒 À acheter : ${[...manquants].slice(0, 8).join(", ")}</p>`;
+    if (manquantsJour.size) html += `<p class="hint">🛒 À acheter : ${[...manquantsJour].slice(0, 10).join(", ")}</p>`;
     html += "</div>";
   }
   const equi = `Profil : ${profil.nom} — ${profil.cuisine}, ${profil.regime}` +
-    (profil.contreIndications.length ? `, sans : ${profil.contreIndications.join(", ")}` : "");
+    (profil.contreIndications.length ? `, sans : ${profil.contreIndications.join(", ")}` : "") +
+    ` — Recettes de saison uniquement (${moisCourant()})`;
   cont.innerHTML = `<p class="hint">${equi}</p>` + html;
 });
 
