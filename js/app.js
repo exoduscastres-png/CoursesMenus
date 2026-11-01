@@ -192,12 +192,39 @@ async function recettesWeb() {
   }));
 }
 
-// ---------- Génération des menus ----------
+// ---------- Génération des menus (étape 1 : suggestions cochables) ----------
 const STRUCTURE_REPAS = {
   "petitdej":   { label:"☕ Petit déjeuner", cats:["feculents","proteines","fruits"] },
   "dej":       { label:"🍽️ Déjeuner", cats:["entree","proteines","feculents","legumes","dessert"] },
   "diner":     { label:"🌙 Dîner", cats:["proteines","legumes","feculents"] }
 };
+const JOURS = ["Lundi","Mardi","Mercredi","Jeudi","Vendredi","Samedi","Dimanche"];
+
+// Anti-redondance : recettes déjà proposées récemment
+function memoireRecettes() { return new Set(JSON.parse(localStorage.getItem("menusaison_utilisees") || "[]")); }
+function mémoriser(nom) {
+  const m = JSON.parse(localStorage.getItem("menusaison_utilisees") || "[]");
+  m.push(nom);
+  // garder seulement les 40 dernières
+  localStorage.setItem("menusaison_utilisees", JSON.stringify(m.slice(-40)));
+}
+
+// Historique glissant : 3 dernières semaines + semaine courante
+function lireSemaines() { return JSON.parse(localStorage.getItem("menusaison_semaines") || "[]"); }
+function numeroSemaine(date) {
+  const d = new Date(Date.UTC(date.getFullYear(), date.getMonth(), date.getDate()));
+  const jour = d.getUTCDay() || 7;
+  d.setUTCDate(d.getUTCDate() + 4 - jour);
+  const debutAnnee = new Date(Date.UTC(d.getUTCFullYear(), 0, 1));
+  return Math.ceil(((d - debutAnnee) / 86400000 + 1) / 7);
+}
+
+let suggestions = []; // suggestions courantes : { jour, repas, nom, ingredients, web, lien, coche }
+let maSemaine = null;  // semaine en construction : [{ jour, repas, nom, ingredients, perso, lien }]
+
+function lienRecherche(nom) {
+  return "https://www.google.com/search?q=" + encodeURIComponent("recette " + nom);
+}
 
 document.getElementById("genererMenus").addEventListener("click", async () => {
   if (courses.length === 0) { alert("Ajoutez d'abord vos courses (onglet « Mes courses »)."); return; }
@@ -209,39 +236,44 @@ document.getElementById("genererMenus").addEventListener("click", async () => {
   cont.innerHTML = "<p>Génération en cours…</p>";
 
   const mois = new Date().getMonth();
+  const dejaVues = memoireRecettes();
   let locales = RECETTES.filter(recetteCompatible).filter(r => recetteDeSaison(r, mois));
   let web = document.getElementById("inclureWeb").checked ? (await recettesWeb()).filter(recetteCompatible).filter(r => recetteDeSaison(r, mois)) : [];
-  const pool = [...locales, ...web];
+  // Anti-redondance : privilégier les recettes jamais/récemment utilisées ; en réserve si pas assez
+  const fraiches = [...locales, ...web].filter(r => !dejaVues.has(r.nom));
+  const deja = [...locales, ...web].filter(r => dejaVues.has(r.nom));
+  const pool = fraiches.length >= 6 ? fraiches : [...fraiches, ...deja];
 
   if (pool.length === 0) { cont.innerHTML = "<p>Aucune recette de saison ne correspond à votre profil. Décochez « recettes du web », assouplissez vos contre-indications, ou attendez la saison !</p>"; return; }
 
-  // Mélange pour varier à chaque génération, en privilégiant saison + courses
-  const melange = pool.map(r => ({ r, s: scoreSaison(r) * 2 + scoreCourses(r) * 3 + Math.random() }))
+  const scorees = pool.map(r => ({ r, s: scoreSaison(r) * 2 + scoreCourses(r) * 3 + Math.random() }))
                       .sort((a, b) => b.s - a.s).map(x => x.r);
-  // Variété : re-mélanger légèrement pour ne pas toujours proposer la même
-  const tirage = (liste, n) => { const copie = [...liste]; const res = []; while (res.length < n && copie.length) { res.push(copie.splice(Math.floor(Math.random()*copie.length),1)[0]); } return res; };
+  const tirage = (liste) => { const copie = [...liste]; return copie.length ? copie.splice(Math.floor(Math.random()*copie.length),1)[0] : null; };
 
-  const jours = ["Lundi","Mardi","Mercredi","Jeudi","Vendredi","Samedi","Dimanche"];
+  suggestions = [];
   let html = "";
   for (let j = 0; j < nbJours; j++) {
-    const jour = jours[j % 7];
-    html += `<div class="jour-menu"><h3>${jour}${j >= 7 ? " (semaine 2)" : ""}</h3>`;
+    const jour = JOURS[j % 7] + (j >= 7 ? " (s2)" : "");
+    html += `<div class="jour-menu"><h3>${jour}</h3>`;
     let manquantsJour = new Set();
     repasChoisis.forEach(repas => {
       const structure = STRUCTURE_REPAS[repas];
       html += `<h4 class="repas-titre">${structure.label}</h4>`;
       structure.cats.forEach(cat => {
         let cands;
-        if (cat === "entree") cands = melange.filter(r => r.type === "entree");
-        else if (cat === "dessert") cands = melange.filter(r => r.type === "dessert");
-        else cands = melange.filter(r => r.categorie === cat && r.type !== "entree" && r.type !== "dessert" && r.type !== "petitdej");
-        if (repas === "petitdej") cands = melange.filter(r => r.type === "petitdej");
+        if (repas === "petitdej") cands = scorees.filter(r => r.type === "petitdej");
+        else if (cat === "entree") cands = scorees.filter(r => r.type === "entree");
+        else if (cat === "dessert") cands = scorees.filter(r => r.type === "dessert");
+        else cands = scorees.filter(r => r.categorie === cat && !["entree","dessert","petitdej"].includes(r.type));
         if (cands.length === 0) return;
-        const recette = tirage(cands, 1)[0];
+        const recette = tirage(cands);
         recette.ingredients.forEach(i => {
           if (!courses.some(c => c.toLowerCase().includes(i.toLowerCase()) || i.toLowerCase().includes(c.toLowerCase()))) manquantsJour.add(i);
         });
-        html += `<div class="recette"><strong>${recette.nom}</strong>${recette.web ? `<span class="tag">web</span> <a href="${recette.lien}" target="_blank">voir la recette</a>` : ""}</div>`;
+        const idx = suggestions.length;
+        suggestions.push({ jour, repas, nom: recette.nom, ingredients: recette.ingredients, web: !!recette.web, lien: recette.lien || lienRecherche(recette.nom), coche: true });
+        html += `<div class="recette"><label><input type="checkbox" class="coche-suggestion" data-idx="${idx}" checked> <strong>${recette.nom}</strong></label>` +
+          `<a class="lien-recette" href="${suggestions[idx].lien}" target="_blank">📖 voir la recette</a></div>`;
       });
     });
     if (manquantsJour.size) html += `<p class="hint">🛒 À acheter : ${[...manquantsJour].slice(0, 10).join(", ")}</p>`;
@@ -249,9 +281,103 @@ document.getElementById("genererMenus").addEventListener("click", async () => {
   }
   const equi = `Profil : ${profil.nom} — ${profil.cuisine}, ${profil.regime}` +
     (profil.contreIndications.length ? `, sans : ${profil.contreIndications.join(", ")}` : "") +
-    ` — Recettes de saison uniquement (${moisCourant()})`;
+    ` — Recettes de saison uniquement (${moisCourant()}) — cochez/décochez puis validez`;
   cont.innerHTML = `<p class="hint">${equi}</p>` + html;
+  document.getElementById("actionsSuggest").style.display = "block";
 });
+
+// ---------- Étape 2 : ma semaine ----------
+function basculerEtape(etape) {
+  document.querySelectorAll(".etape").forEach(b => b.classList.toggle("active", b.dataset.etape === etape));
+  document.getElementById("etapeSuggest").style.display = etape === "suggest" ? "block" : "none";
+  document.getElementById("etapeSemaine").style.display = etape === "semaine" ? "block" : "none";
+}
+document.querySelectorAll(".etapes-menu .etape").forEach(b => b.addEventListener("click", () => basculerEtape(b.dataset.etape)));
+
+document.getElementById("validerSelection").addEventListener("click", () => {
+  document.querySelectorAll(".coche-suggestion").forEach(cb => { suggestions[cb.dataset.idx].coche = cb.checked; });
+  const gardees = suggestions.filter(s => s.coche);
+  gardees.forEach(s => mémoriser(s.nom));
+  maSemaine = { cree: new Date().toISOString(), items: gardees.map(s => ({ jour: s.jour, repas: s.repas, nom: s.nom, ingredients: s.ingredients, perso: false, lien: s.lien })) };
+  afficherSemaine();
+  basculerEtape("semaine");
+});
+
+document.getElementById("retourSuggest").addEventListener("click", () => basculerEtape("suggest"));
+
+function afficherSemaine() {
+  if (!maSemaine) return;
+  const cont = document.getElementById("semaineEditable");
+  let html = "";
+  JOURS.forEach(jour => {
+    const items = maSemaine.items.filter(i => i.jour === jour || i.jour === jour + " (s2)");
+    if (!items.length) return;
+    html += `<div class="jour-menu"><h3>${jour}</h3>`;
+    ["petitdej","dej","diner"].forEach(repas => {
+      const r = items.filter(i => i.repas === repas);
+      if (!r.length) return;
+      html += `<h4 class="repas-titre">${STRUCTURE_REPAS[repas].label}</h4>`;
+      r.forEach(i => {
+        html += `<div class="recette"><strong>${i.nom}</strong>${i.perso ? '<span class="tag">perso</span>' : ""} ` +
+          `<button class="mini-btn suppr-item" data-nom="${i.nom}" data-repas="${repas}">✕</button> ` +
+          `<a class="lien-recette" href="${i.lien || lienRecherche(i.nom)}" target="_blank">📖 recette</a></div>`;
+      });
+    });
+    html += "</div>";
+  });
+  if (!html) html = "<p class='hint'>Aucun repas sélectionné.</p>";
+  cont.innerHTML = html;
+  // boutons suppression
+  cont.querySelectorAll(".suppr-item").forEach(b => b.addEventListener("click", () => {
+    maSemaine.items = maSemaine.items.filter(i => !(i.nom === b.dataset.nom && i.repas === b.dataset.repas));
+    afficherSemaine();
+  }));
+}
+
+// Recettes personnelles
+document.getElementById("persoJour").innerHTML = JOURS.map(j => `<option value="${j}">${j}</option>`).join("");
+document.getElementById("nouvelleRecettePerso").addEventListener("click", () => {
+  const f = document.getElementById("recettePersoForm");
+  f.style.display = f.style.display === "none" ? "block" : "none";
+});
+document.getElementById("persoAjouter").addEventListener("click", () => {
+  const nom = document.getElementById("persoNom").value.trim();
+  const ings = document.getElementById("persoIngredients").value.split(",").map(s => s.trim()).filter(Boolean);
+  const repas = document.getElementById("persoRepas").value;
+  const jour = document.getElementById("persoJour").value;
+  if (!nom) { alert("Donnez un nom à votre recette."); return; }
+  if (!maSemaine) maSemaine = { cree: new Date().toISOString(), items: [] };
+  maSemaine.items.push({ jour, repas, nom, ingredients: ings, perso: true, lien: null });
+  document.getElementById("persoNom").value = "";
+  document.getElementById("persoIngredients").value = "";
+  afficherSemaine();
+});
+
+// Sauvegarde de la semaine + historique glissant (3 semaines passées + courante)
+document.getElementById("sauverSemaine").addEventListener("click", () => {
+  if (!maSemaine || !maSemaine.items.length) { alert("Votre semaine est vide."); return; }
+  const d = new Date();
+  const id = d.getFullYear() + "-S" + numeroSemaine(d);
+  const semaines = lireSemaines().filter(s => s.id !== id);
+  semaines.push({ id, label: "Semaine " + numeroSemaine(d) + " (" + d.toLocaleDateString("fr-FR") + ")", data: maSemaine });
+  // garder les 4 dernières (3 passées + courante)
+  localStorage.setItem("menusaison_semaines", JSON.stringify(semaines.slice(-4)));
+  afficherHistorique();
+  alert("Semaine sauvegardée dans l'historique (3 dernières semaines conservées + la courante).");
+});
+
+function afficherHistorique() {
+  const semaines = lireSemaines();
+  const cont = document.getElementById("historiqueSemaines");
+  if (!semaines.length) { cont.innerHTML = "<p class='hint'>Aucune semaine sauvegardée pour le moment.</p>"; return; }
+  cont.innerHTML = semaines.slice().reverse().map(s => {
+    const nb = s.data.items.length;
+    return `<details class="hist-semaine"><summary>📅 ${s.label} — ${nb} repas</summary>` +
+      s.data.items.map(i => `<div class="recette"><strong>${i.nom}</strong> <span class="hint">${i.jour} · ${STRUCTURE_REPAS[i.repas].label.replace(/^\S+\s/, "")}</span>${i.perso ? '<span class="tag">perso</span>' : ""}</div>`).join("") +
+      "</details>";
+  }).join("");
+}
+afficherHistorique();
 
 // ---------- Init ----------
 afficherCourses();

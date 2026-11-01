@@ -1,0 +1,18 @@
+{
+  "name": "MenuSaison — Menus à partir de vos courses",
+  "short_name": "MenuSaison",
+  "description": "Menus équilibrés et de saison générés à partir de vos courses.",
+  "start_url": "./index.html",
+  "display": "standalone",
+  "background_color": "#f6f4ee",
+  "theme_color": "#3a7d44",
+  "lang": "fr",
+  "icons": [
+    {
+      "src": "icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any"
+    }
+  ]
+}

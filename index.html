@@ -5,6 +5,8 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>MenuSaison — Menus à partir de vos courses</title>
 <link rel="stylesheet" href="css/style.css">
+<link rel="manifest" href="manifest.webmanifest">
+<meta name="theme-color" content="#3a7d44">
 </head>
 <body>
 <header>
@@ -73,18 +75,50 @@
 
   <!-- ONGLET MENUS -->
   <section id="menus" class="panel">
-    <div class="menu-controls">
-      <label>Nombre de jours : <input type="number" id="nbJours" value="7" min="1" max="14"></label>
-      <fieldset class="repas-choix">
-        <legend>Repas</legend>
-        <label><input type="checkbox" id="repasPdj" checked> Petit déjeuner</label>
-        <label><input type="checkbox" id="repasDej" checked> Déjeuner</label>
-        <label><input type="checkbox" id="repasDiner" checked> Dîner</label>
-      </fieldset>
-      <label><input type="checkbox" id="inclureWeb" checked> Enrichir avec des recettes du web (TheMealDB)</label>
-      <button id="genererMenus">Générer mes menus</button>
+    <div class="etapes-menu">
+      <button class="etape active" data-etape="suggest">1. Menus suggérés</button>
+      <button class="etape" data-etape="semaine">2. Mes menus de la semaine</button>
     </div>
-    <div id="menusResultat"></div>
+
+    <!-- ÉTAPE 1 : SUGGESTIONS -->
+    <div id="etapeSuggest" class="etape-panel">
+      <div class="menu-controls">
+        <label>Nombre de jours : <input type="number" id="nbJours" value="7" min="1" max="14"></label>
+        <fieldset class="repas-choix">
+          <legend>Repas</legend>
+          <label><input type="checkbox" id="repasPdj" checked> Petit déjeuner</label>
+          <label><input type="checkbox" id="repasDej" checked> Déjeuner</label>
+          <label><input type="checkbox" id="repasDiner" checked> Dîner</label>
+        </fieldset>
+        <label><input type="checkbox" id="inclureWeb" checked> Enrichir avec des recettes du web (TheMealDB)</label>
+        <button id="genererMenus">Générer des suggestions</button>
+      </div>
+      <div id="menusResultat"></div>
+      <div id="actionsSuggest" style="display:none">
+        <button id="validerSelection">✅ Valider ma sélection → construire ma semaine</button>
+      </div>
+    </div>
+
+    <!-- ÉTAPE 2 : MA SEMAINE -->
+    <div id="etapeSemaine" class="etape-panel" style="display:none">
+      <div class="menu-controls">
+        <button id="retourSuggest">← Revenir aux suggestions</button>
+        <h3 style="margin:0">Ma semaine</h3>
+        <button id="nouvelleRecettePerso">➕ Ajouter ma propre recette</button>
+        <button id="sauverSemaine">💾 Sauvegarder ma semaine</button>
+      </div>
+      <div id="semaineEditable"></div>
+      <div id="recettePersoForm" style="display:none" class="jour-menu">
+        <h3>Ma recette perso</h3>
+        <label>Nom : <input type="text" id="persoNom" placeholder="Ex : Tajine de ma grand-mère"></label>
+        <label>Ingrédients (séparés par des virgules) : <input type="text" id="persoIngredients" placeholder="Ex : poulet, citron, olives"></label>
+        <label>Repas : <select id="persoRepas"><option value="petitdej">Petit déjeuner</option><option value="dej">Déjeuner</option><option value="diner">Dîner</option></select></label>
+        <label>Jour : <select id="persoJour"></select></label>
+        <button id="persoAjouter">Ajouter à ma semaine</button>
+      </div>
+      <h3>📁 Historique (semaines passées)</h3>
+      <div id="historiqueSemaines"></div>
+    </div>
   </section>
 </main>
 
@@ -92,5 +126,8 @@
 <script src="js/data/season.js"></script>
 <script src="js/data/recipes.js"></script>
 <script src="js/app.js"></script>
+<script>
+if ("serviceWorker" in navigator) navigator.serviceWorker.register("./sw.js").catch(() => {});
+</script>
 </body>
 </html>

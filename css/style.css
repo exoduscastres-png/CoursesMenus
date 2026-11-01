@@ -33,6 +33,16 @@ fieldset label { display:block; margin:.3rem 0; }
 .repas-titre { color:var(--brun); margin:.8rem 0 .3rem; border-bottom:1px solid #e0d8c8; padding-bottom:.2rem; }
 .menu-controls fieldset.repas-choix { margin:0; padding:.4rem .6rem; display:flex; flex-direction:column; gap:.2rem; }
 .jour-menu h4.repas-titre:first-of-type { margin-top:.3rem; }
+.etapes-menu { display:flex; gap:.5rem; margin-bottom:1rem; }
+.etapes-menu .etape { flex:1; padding:.7rem; background:#e8e4d8; color:#000; border:1px solid #ccc; border-radius:8px; font-size:.95rem; }
+.etapes-menu .etape.active { background:var(--vert); color:#fff; border-color:var(--vert); font-weight:700; }
+.lien-recette { font-size:.85rem; margin-left:.5rem; }
+.mini-btn { padding:.1rem .4rem; font-size:.8rem; background:var(--rouge); cursor:pointer; }
+.hist-semaine { background:#fff; border:1px solid #ccc; border-radius:8px; padding:.5rem .8rem; margin:.5rem 0; }
+.hist-semaine summary { cursor:pointer; font-weight:600; color:var(--brun); }
+#recettePersoForm label { display:block; margin:.4rem 0; }
+#recettePersoForm input, #recettePersoForm select { padding:.4rem; margin-left:.4rem; }
+#actionsSuggest { margin:1rem 0; }
 .recette { border-left:4px solid var(--vert); padding-left:.8rem; margin:.6rem 0; }
 .tag { display:inline-block; font-size:.75rem; background:var(--vert); color:#fff; border-radius:10px; padding:.1rem .5rem; margin-left:.4rem; }
 .tag.alerte { background:var(--rouge); }
