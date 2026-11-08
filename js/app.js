@@ -171,27 +171,6 @@ function scoreCourses(r) {
   return possedes / r.ingredients.length;
 }
 
-// ---------- Recettes web (TheMealDB) ----------
-async function recettesWeb() {
-  const utilisees = new Set(JSON.parse(localStorage.getItem("menusaison_web") || "[]"));
-  let pool = [];
-  try {
-    const rep = await fetch("https://www.themealdb.com/api/json/v1/1/search.php?f=" + "abcdrstl"[Math.floor(Math.random()*8)]);
-    const data = await rep.json();
-    pool = (data.meals || []).filter(m => m.strArea !== "British");
-  } catch (e) { return []; }
-  const candidates = pool.filter(m => !utilisees.has(m.idMeal)).slice(0, 8);
-  candidates.forEach(m => utilisees.add(m.idMeal));
-  localStorage.setItem("menusaison_web", JSON.stringify([...utilisees]));
-  return candidates.map(m => ({
-    nom: m.strMeal, cuisine: "mixte", regime: "flexitarien",
-    categorie: (m.strCategory || "").toLowerCase().includes("veget") ? "legumes" : "proteines",
-    type: "plat", mois: "toute", web: true,
-    ingredients: Object.keys(m).filter(k => k.startsWith("strIngredient") && m[k]).map(k => m[k].toLowerCase()).map(traduire),
-    eviter: [], lien: m.strSource || `https://www.themealdb.com/meal/${m.idMeal}`
-  }));
-}
-
 // ---------- Génération des menus (étape 1 : suggestions cochables) ----------
 const STRUCTURE_REPAS = {
   "petitdej":   { label:"☕ Petit déjeuner", cats:["feculents","proteines","fruits"] },
@@ -222,20 +201,17 @@ function numeroSemaine(date) {
 let suggestions = []; // suggestions courantes : { jour, repas, nom, ingredients, web, lien, coche }
 let maSemaine = null;  // semaine en construction : [{ jour, repas, nom, ingredients, perso, lien }]
 
-function lienRecherche(nom) {
-  return "https://www.google.com/search?q=" + encodeURIComponent("recette " + nom);
+// ---------- Lien Lidl Recettes (seule source externe de recettes) ----------
+const LIDL_URL = "https://recettes.lidl.fr/nos-recettes";
+function lienRecherche(nom) { return LIDL_URL; }
+function boutonLidl(nom) {
+  return `<button class="btn-lidl" data-nom="${nom.replace(/"/g, '&quot;')}" title="Copier le nom et ouvrir Lidl Recettes">🛒 Lidl Recettes</button>`;
 }
-
-// ---------- Lien Monsieur Cuisine ----------
-const MC_URL = "https://www.monsieur-cuisine.com/fr/recettes";
-function boutonMC(nom) {
-  return `<button class="btn-mc" data-nom="${nom.replace(/"/g, '&quot;')}" title="Copier le nom et ouvrir Monsieur Cuisine">🤖 Monsieur Cuisine</button>`;
-}
-function activerBoutonsMC(conteneur) {
-  conteneur.querySelectorAll(".btn-mc").forEach(b => b.addEventListener("click", async () => {
+function activerBoutonsLidl(conteneur) {
+  conteneur.querySelectorAll(".btn-lidl").forEach(b => b.addEventListener("click", async () => {
     const nom = b.dataset.nom;
     try { await navigator.clipboard.writeText(nom); } catch (e) {}
-    window.open(MC_URL, "_blank");
+    window.open(LIDL_URL, "_blank");
   }));
 }
 
@@ -250,14 +226,13 @@ document.getElementById("genererMenus").addEventListener("click", async () => {
 
   const mois = new Date().getMonth();
   const dejaVues = memoireRecettes();
-  let locales = RECETTES.filter(recetteCompatible).filter(r => recetteDeSaison(r, mois));
-  let web = document.getElementById("inclureWeb").checked ? (await recettesWeb()).filter(recetteCompatible).filter(r => recetteDeSaison(r, mois)) : [];
+  const locales = RECETTES.filter(recetteCompatible).filter(r => recetteDeSaison(r, mois));
   // Anti-redondance : privilégier les recettes jamais/récemment utilisées ; en réserve si pas assez
-  const fraiches = [...locales, ...web].filter(r => !dejaVues.has(r.nom));
-  const deja = [...locales, ...web].filter(r => dejaVues.has(r.nom));
+  const fraiches = locales.filter(r => !dejaVues.has(r.nom));
+  const deja = locales.filter(r => dejaVues.has(r.nom));
   const pool = fraiches.length >= 6 ? fraiches : [...fraiches, ...deja];
 
-  if (pool.length === 0) { cont.innerHTML = "<p>Aucune recette de saison ne correspond à votre profil. Décochez « recettes du web », assouplissez vos contre-indications, ou attendez la saison !</p>"; return; }
+  if (pool.length === 0) { cont.innerHTML = "<p>Aucune recette de saison ne correspond à votre profil. Assouplissez vos contre-indications, ou attendez la saison !</p>"; return; }
 
   const scorees = pool.map(r => ({ r, s: scoreSaison(r) * 2 + scoreCourses(r) * 3 + Math.random() }))
                       .sort((a, b) => b.s - a.s).map(x => x.r);
@@ -286,7 +261,7 @@ document.getElementById("genererMenus").addEventListener("click", async () => {
         const idx = suggestions.length;
         suggestions.push({ jour, repas, nom: recette.nom, ingredients: recette.ingredients, web: !!recette.web, lien: recette.lien || lienRecherche(recette.nom), coche: true });
         html += `<div class="recette"><label><input type="checkbox" class="coche-suggestion" data-idx="${idx}" checked> <strong>${recette.nom}</strong></label>` +
-          `<a class="lien-recette" href="${suggestions[idx].lien}" target="_blank">📖 voir la recette</a> ${boutonMC(recette.nom)}</div>`;
+          `<a class="lien-recette" href="${suggestions[idx].lien}" target="_blank">📖 voir la recette</a> ${boutonLidl(recette.nom)}</div>`;
       });
     });
     if (manquantsJour.size) html += `<p class="hint">🛒 À acheter : ${[...manquantsJour].slice(0, 10).join(", ")}</p>`;
@@ -296,7 +271,7 @@ document.getElementById("genererMenus").addEventListener("click", async () => {
     (profil.contreIndications.length ? `, sans : ${profil.contreIndications.join(", ")}` : "") +
     ` — Recettes de saison uniquement (${moisCourant()}) — cochez/décochez puis validez`;
   cont.innerHTML = `<p class="hint">${equi}</p>` + html;
-  activerBoutonsMC(cont);
+  activerBoutonsLidl(cont);
   document.getElementById("actionsSuggest").style.display = "block";
 });
 
@@ -334,7 +309,7 @@ function afficherSemaine() {
       r.forEach(i => {
         html += `<div class="recette"><strong>${i.nom}</strong>${i.perso ? '<span class="tag">perso</span>' : ""} ` +
           `<button class="mini-btn suppr-item" data-nom="${i.nom}" data-repas="${repas}">✕</button> ` +
-          `<a class="lien-recette" href="${i.lien || lienRecherche(i.nom)}" target="_blank">📖 recette</a> ${boutonMC(i.nom)}</div>`;
+          `<a class="lien-recette" href="${i.lien || lienRecherche(i.nom)}" target="_blank">📖 recette</a> ${boutonLidl(i.nom)}</div>`;
       });
     });
     html += "</div>";
@@ -346,7 +321,7 @@ function afficherSemaine() {
     maSemaine.items = maSemaine.items.filter(i => !(i.nom === b.dataset.nom && i.repas === b.dataset.repas));
     afficherSemaine();
   }));
-  activerBoutonsMC(cont);
+  activerBoutonsLidl(cont);
 }
 
 // Recettes personnelles

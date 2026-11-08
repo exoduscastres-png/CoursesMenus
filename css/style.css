@@ -37,8 +37,8 @@ fieldset label { display:block; margin:.3rem 0; }
 .etapes-menu .etape { flex:1; padding:.7rem; background:#e8e4d8; color:#000; border:1px solid #ccc; border-radius:8px; font-size:.95rem; }
 .etapes-menu .etape.active { background:var(--vert); color:#fff; border-color:var(--vert); font-weight:700; }
 .lien-recette { font-size:.85rem; margin-left:.5rem; }
-.btn-mc { background:#0050aa; color:#fff; border:none; border-radius:12px; padding:.15rem .55rem; font-size:.78rem; cursor:pointer; margin-left:.4rem; }
-.btn-mc:hover { filter:brightness(1.15); }
+.btn-lidl { background:#0050aa; color:#fff; border:none; border-radius:12px; padding:.15rem .55rem; font-size:.78rem; cursor:pointer; margin-left:.4rem; }
+.btn-lidl:hover { filter:brightness(1.15); }
 .mini-btn { padding:.1rem .4rem; font-size:.8rem; background:var(--rouge); cursor:pointer; }
 .hist-semaine { background:#fff; border:1px solid #ccc; border-radius:8px; padding:.5rem .8rem; margin:.5rem 0; }
 .hist-semaine summary { cursor:pointer; font-weight:600; color:var(--brun); }
