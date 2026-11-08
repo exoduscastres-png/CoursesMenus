@@ -226,7 +226,7 @@ document.getElementById("genererMenus").addEventListener("click", async () => {
 
   const mois = new Date().getMonth();
   const dejaVues = memoireRecettes();
-  const locales = RECETTES.filter(recetteCompatible).filter(r => recetteDeSaison(r, mois));
+  const locales = [...RECETTES, ...lireRecettesLidl()].filter(recetteCompatible).filter(r => recetteDeSaison(r, mois));
   // Anti-redondance : privilégier les recettes jamais/récemment utilisées ; en réserve si pas assez
   const fraiches = locales.filter(r => !dejaVues.has(r.nom));
   const deja = locales.filter(r => dejaVues.has(r.nom));
@@ -259,9 +259,9 @@ document.getElementById("genererMenus").addEventListener("click", async () => {
           if (!courses.some(c => c.toLowerCase().includes(i.toLowerCase()) || i.toLowerCase().includes(c.toLowerCase()))) manquantsJour.add(i);
         });
         const idx = suggestions.length;
-        suggestions.push({ jour, repas, nom: recette.nom, ingredients: recette.ingredients, web: !!recette.web, lien: recette.lien || lienRecherche(recette.nom), coche: true });
+        suggestions.push({ jour, repas, nom: recette.nom, ingredients: recette.ingredients, web: !!recette.web, lidl: !!recette.lidl, lien: recette.lien || lienRecherche(recette.nom), coche: true });
         html += `<div class="recette"><label><input type="checkbox" class="coche-suggestion" data-idx="${idx}" checked> <strong>${recette.nom}</strong></label>` +
-          `<a class="lien-recette" href="${suggestions[idx].lien}" target="_blank">📖 voir la recette</a> ${boutonLidl(recette.nom)}</div>`;
+          `${recette.lidl ? '<span class="tag">Lidl</span>' : ""}<a class="lien-recette" href="${suggestions[idx].lien}" target="_blank">📖 voir la recette</a> ${boutonLidl(recette.nom)}</div>`;
       });
     });
     if (manquantsJour.size) html += `<p class="hint">🛒 À acheter : ${[...manquantsJour].slice(0, 10).join(", ")}</p>`;
@@ -274,6 +274,80 @@ document.getElementById("genererMenus").addEventListener("click", async () => {
   activerBoutonsLidl(cont);
   document.getElementById("actionsSuggest").style.display = "block";
 });
+
+// ---------- Import de recettes Lidl Recettes ----------
+function lireRecettesLidl() { return JSON.parse(localStorage.getItem("menusaison_lidl") || "[]"); }
+function ecrireRecettesLidl(liste) { localStorage.setItem("menusaison_lidl", JSON.stringify(liste)); }
+
+const SAISON_VERS_MOIS = {
+  "hiver": [11, 0, 1], "printemps": [2, 3, 4], "été": [5, 6, 7], "ete": [5, 6, 7], "automne": [8, 9, 10]
+};
+
+function nettoyerIngredient(ligne) {
+  // "4 filets de poulet" -> "filets de poulet" ; "40 cl crème de coco" -> "crème de coco" ; "2 gousses d'ail" -> "gousses d'ail"
+  let s = ligne.replace(/^\s*\d+([.,]\d+)?\s*/, "");            // nombre
+  s = s.replace(/^(g|kg|cl|ml|l)\b\s*/i, "");                    // unité seule
+  s = s.replace(/^c\.?\s*à\s*c\.?\s*/i, "").replace(/^c\.?\s*à\s*s\.?\s*/i, ""); // cuillères
+  return s.replace(/\s+/g, " ").trim();
+}
+
+async function importerRecetteLidl(url) {
+  const statut = document.getElementById("lidlStatus");
+  if (!/recettes\.lidl\.fr\/recettes\//.test(url)) { statut.textContent = "❌ L'adresse doit venir de recettes.lidl.fr/recettes/..."; return; }
+  statut.textContent = "⏳ Lecture de la recette sur Lidl Recettes…";
+  try {
+    const rep = await fetch("https://r.jina.ai/" + url);
+    const texte = await rep.text();
+    // Titre
+    const mTitre = texte.match(/^# (.+)$/m);
+    if (!mTitre) { statut.textContent = "❌ Recette introuvable. Vérifiez l'adresse."; return; }
+    const nom = mTitre[1].trim();
+    // Ingrédients : lignes "*   - [x]   4 filets de poulet"
+    const section = texte.split("## Ingrédients")[1] || "";
+    const fin = section.split("## Préparation")[0];
+    const ingredients = [...fin.matchAll(/-\s*\[x\]\s+(.+)$/gm)]
+      .map(m => nettoyerIngredient(m[1])).filter(i => i.length > 1);
+    if (ingredients.length === 0) { statut.textContent = "❌ Ingrédients non détectés."; return; }
+    // Mots clés : catégorie + saison
+    const mc = [...texte.matchAll(/\[([^\]]+)\]\(https:\/\/recettes\.lidl\.fr\/selection/g)].map(m => m[1].toLowerCase());
+    let type = "plat";
+    if (mc.some(m => m.includes("dessert"))) type = "dessert";
+    else if (mc.some(m => m.includes("entrée") || m.includes("entree") || m.includes("apéritif") || m.includes("aperitif"))) type = "entree";
+    const saisonTrouvee = mc.map(m => SAISON_VERS_MOIS[m]).filter(Boolean);
+    const mois = saisonTrouvee.length ? [...new Set(saisonTrouvee.flat())] : "toute";
+    // Régime : viande/poisson -> flexitarien, sinon végétarien
+    const chair = /(poulet|bœuf|boeuf|veau|agneau|porc|dinde|jambon|lardons|bacon|steak|côtelette|cotelette|saucisse|merguez|poisson|cabillaud|saumon|thon|crevette|maquereau|colin)/i;
+    const regime = ingredients.some(i => chair.test(i)) ? "flexitarien" : "vegetarien";
+    // Catégorie nutritionnelle
+    const cats = ingredients.map(categoriser);
+    const categorie = cats.includes("proteines") ? "proteines" : (cats.includes("feculents") ? "feculents" : "legumes");
+    const recette = { nom, cuisine: "mixte", regime, categorie, type, mois, ingredients, eviter: [], lidl: true, lien: url };
+    const liste = lireRecettesLidl();
+    if (liste.some(r => r.lien === url)) { statut.textContent = "ℹ️ Cette recette est déjà importée."; return; }
+    liste.push(recette);
+    ecrireRecettesLidl(liste);
+    statut.textContent = `✅ « ${nom} » importée (${ingredients.length} ingrédients${mois !== "toute" ? ", recette de saison" : ""}).`;
+    afficherRecettesLidl();
+  } catch (e) {
+    statut.textContent = "❌ Erreur de lecture (connexion ? limite du service ?). Réessayez dans un instant.";
+  }
+}
+
+function afficherRecettesLidl() {
+  const cont = document.getElementById("listeLidl");
+  const liste = lireRecettesLidl();
+  if (!liste.length) { cont.innerHTML = ""; return; }
+  cont.innerHTML = "<h4>Mes recettes Lidl importées (" + liste.length + ")</h4>" +
+    liste.map((r, i) => `<div class="recette"><strong>${r.nom}</strong> <span class="tag">Lidl</span>` +
+      `<a class="lien-recette" href="${r.lien}" target="_blank">📖 fiche Lidl</a>` +
+      `<button class="mini-btn suppr-lidl" data-i="${i}">✕</button></div>`).join("");
+  cont.querySelectorAll(".suppr-lidl").forEach(b => b.addEventListener("click", () => {
+    const liste = lireRecettesLidl(); liste.splice(parseInt(b.dataset.i), 1); ecrireRecettesLidl(liste); afficherRecettesLidl();
+  }));
+}
+document.getElementById("importerLidl").addEventListener("click", () => importerRecetteLidl(document.getElementById("lidlUrl").value.trim()));
+document.getElementById("lidlUrl").addEventListener("keydown", e => { if (e.key === "Enter") document.getElementById("importerLidl").click(); });
+afficherRecettesLidl();
 
 // ---------- Étape 2 : ma semaine ----------
 function basculerEtape(etape) {

@@ -92,6 +92,16 @@
         </fieldset>
         <button id="genererMenus">Générer des suggestions</button>
       </div>
+      <div class="import-lidl jour-menu">
+        <h3>📥 Importer une recette de Lidl Recettes</h3>
+        <p class="hint">Copiez l'adresse d'une recette sur <a href="https://recettes.lidl.fr/nos-recettes" target="_blank">recettes.lidl.fr</a> (bouton droit sur la recette → « Copier l'adresse du lien »), puis collez-la ici. La recette (nom, ingrédients, saison, lien) rejoint votre base et sera proposée dans les menus.</p>
+        <div class="input-row">
+          <input type="url" id="lidlUrl" placeholder="https://recettes.lidl.fr/recettes/...">
+          <button id="importerLidl">Importer</button>
+        </div>
+        <div id="lidlStatus" class="hint"></div>
+        <div id="listeLidl"></div>
+      </div>
       <div id="menusResultat"></div>
       <div id="actionsSuggest" style="display:none">
         <button id="validerSelection">✅ Valider ma sélection → construire ma semaine</button>
