@@ -226,6 +226,19 @@ function lienRecherche(nom) {
   return "https://www.google.com/search?q=" + encodeURIComponent("recette " + nom);
 }
 
+// ---------- Lien Monsieur Cuisine ----------
+const MC_URL = "https://www.monsieur-cuisine.com/fr/recettes";
+function boutonMC(nom) {
+  return `<button class="btn-mc" data-nom="${nom.replace(/"/g, '&quot;')}" title="Copier le nom et ouvrir Monsieur Cuisine">🤖 Monsieur Cuisine</button>`;
+}
+function activerBoutonsMC(conteneur) {
+  conteneur.querySelectorAll(".btn-mc").forEach(b => b.addEventListener("click", async () => {
+    const nom = b.dataset.nom;
+    try { await navigator.clipboard.writeText(nom); } catch (e) {}
+    window.open(MC_URL, "_blank");
+  }));
+}
+
 document.getElementById("genererMenus").addEventListener("click", async () => {
   if (courses.length === 0) { alert("Ajoutez d'abord vos courses (onglet « Mes courses »)."); return; }
   profil = profil || { nom: "Moi", cuisine: "mixte", regime: "flexitarien", contreIndications: [] };
@@ -273,7 +286,7 @@ document.getElementById("genererMenus").addEventListener("click", async () => {
         const idx = suggestions.length;
         suggestions.push({ jour, repas, nom: recette.nom, ingredients: recette.ingredients, web: !!recette.web, lien: recette.lien || lienRecherche(recette.nom), coche: true });
         html += `<div class="recette"><label><input type="checkbox" class="coche-suggestion" data-idx="${idx}" checked> <strong>${recette.nom}</strong></label>` +
-          `<a class="lien-recette" href="${suggestions[idx].lien}" target="_blank">📖 voir la recette</a></div>`;
+          `<a class="lien-recette" href="${suggestions[idx].lien}" target="_blank">📖 voir la recette</a> ${boutonMC(recette.nom)}</div>`;
       });
     });
     if (manquantsJour.size) html += `<p class="hint">🛒 À acheter : ${[...manquantsJour].slice(0, 10).join(", ")}</p>`;
@@ -283,6 +296,7 @@ document.getElementById("genererMenus").addEventListener("click", async () => {
     (profil.contreIndications.length ? `, sans : ${profil.contreIndications.join(", ")}` : "") +
     ` — Recettes de saison uniquement (${moisCourant()}) — cochez/décochez puis validez`;
   cont.innerHTML = `<p class="hint">${equi}</p>` + html;
+  activerBoutonsMC(cont);
   document.getElementById("actionsSuggest").style.display = "block";
 });
 
@@ -320,7 +334,7 @@ function afficherSemaine() {
       r.forEach(i => {
         html += `<div class="recette"><strong>${i.nom}</strong>${i.perso ? '<span class="tag">perso</span>' : ""} ` +
           `<button class="mini-btn suppr-item" data-nom="${i.nom}" data-repas="${repas}">✕</button> ` +
-          `<a class="lien-recette" href="${i.lien || lienRecherche(i.nom)}" target="_blank">📖 recette</a></div>`;
+          `<a class="lien-recette" href="${i.lien || lienRecherche(i.nom)}" target="_blank">📖 recette</a> ${boutonMC(i.nom)}</div>`;
       });
     });
     html += "</div>";
@@ -332,6 +346,7 @@ function afficherSemaine() {
     maSemaine.items = maSemaine.items.filter(i => !(i.nom === b.dataset.nom && i.repas === b.dataset.repas));
     afficherSemaine();
   }));
+  activerBoutonsMC(cont);
 }
 
 // Recettes personnelles
