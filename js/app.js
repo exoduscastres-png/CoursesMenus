@@ -2,6 +2,10 @@
 let courses = JSON.parse(localStorage.getItem("menusaison_courses") || "[]");
 let profil = JSON.parse(localStorage.getItem("menusaison_profil") || "null");
 
+// Base de recettes Lidl collectée (js/data/lidl-db.json, alimentée par scraping/scrape_lidl.py)
+let BASE_LIDL = [];
+fetch("js/data/lidl-db.json").then(r => r.ok ? r.json() : []).then(d => { BASE_LIDL = d; }).catch(() => {});
+
 const CI_MAP = {
   gluten: ["farine", "pâtes", "semoule", "pain", "boulgour", "vermicelle", "couscous"],
   lactose: ["lait", "beurre", "crème", "yaourt", "fromage"],
@@ -226,7 +230,7 @@ document.getElementById("genererMenus").addEventListener("click", async () => {
 
   const mois = new Date().getMonth();
   const dejaVues = memoireRecettes();
-  const locales = [...RECETTES, ...lireRecettesLidl()].filter(recetteCompatible).filter(r => recetteDeSaison(r, mois));
+  const locales = [...RECETTES, ...BASE_LIDL, ...lireRecettesLidl()].filter(recetteCompatible).filter(r => recetteDeSaison(r, mois));
   // Anti-redondance : privilégier les recettes jamais/récemment utilisées ; en réserve si pas assez
   const fraiches = locales.filter(r => !dejaVues.has(r.nom));
   const deja = locales.filter(r => dejaVues.has(r.nom));

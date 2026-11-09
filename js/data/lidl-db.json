@@ -1,0 +1,18 @@
+[
+  {
+    "nom": "Curry de poulet aux pois chiches et aux épinards",
+    "cuisine": "mixte", "regime": "flexitarien", "categorie": "proteines", "type": "plat",
+    "mois": [11, 0, 1], "lidl": true,
+    "lien": "https://recettes.lidl.fr/recettes/curry-de-poulet-aux-pois-chiches-et-aux-epinards",
+    "ingredients": ["filets de poulet", "yaourts nature", "pois chiches", "épinards", "oignon jaune", "gousses d'ail", "crème de coco", "curry", "cumin", "sel fin", "poivre noir", "huile d'olive"],
+    "eviter": []
+  },
+  {
+    "nom": "Rôti de lentilles et champignons et purée de pommes de terre",
+    "cuisine": "mixte", "regime": "vegetarien", "categorie": "proteines", "type": "plat",
+    "mois": "toute", "lidl": true,
+    "lien": "https://recettes.lidl.fr/recettes/roti-de-lentilles-et-champignons-et-puree-de-pommes-de-terre",
+    "ingredients": ["tofu", "lentilles", "flocons d'avoine", "sauce soja", "oignon jaune", "gousse d'ail", "champignons", "huile végétale", "concentré de tomates", "cerneaux de noix", "persil", "thym frais", "moutarde fine", "paprika", "carottes", "céleri", "farine", "vinaigre balsamique", "bouillon de légumes", "chou rouge", "sirop d'érable", "vinaigre blanc", "huile d'olive", "pommes de terre", "margarine", "lait d'amande", "noix de muscade moulue"],
+    "eviter": []
+  }
+]

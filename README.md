@@ -28,3 +28,17 @@ Ouvrir simplement `index.html` dans un navigateur (aucun serveur ni installation
 
 - Les courses et le profil sont stockés localement (localStorage) — aucune donnée envoyée.
 - L'OCR du ticket nécessite une connexion Internet (bibliothèque Tesseract.js chargée via CDN) ; la saisie manuelle et la liste de saison fonctionnent hors ligne.
+
+## Base de recettes Lidl (collecte)
+
+Le dossier `scraping/` contient `scrape_lidl.py`, un script qui collecte les recettes de
+[recettes.lidl.fr](https://recettes.lidl.fr) (sitemap public, ~4700 recettes) et les enregistre
+dans `js/data/lidl-db.json`, chargée automatiquement par l'application.
+
+```bash
+python3 scraping/scrape_lidl.py              # collecte complète (2-3 h, reprenable)
+python3 scraping/scrape_lidl.py --limite 50  # test rapide sur 50 recettes
+```
+
+Aucune dépendance (Python 3 standard). Idéal sur un NAS (ex. UGREEN/UGOS, Docker ou SSH).
+La collecte est **reprenable** : relancer le script reprend là où il s'était arrêté.
