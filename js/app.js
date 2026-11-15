@@ -422,28 +422,32 @@ document.getElementById("persoAjouter").addEventListener("click", () => {
 });
 
 // ---------- Export PDF (impression navigateur, liens conservés) ----------
-document.getElementById("pdfSemaine").addEventListener("click", () => {
-  if (!maSemaine || !maSemaine.items.length) { alert("Votre semaine est vide : générez des suggestions et validez-les d'abord."); return; }
-  const repasActifs = ["petitdej","dej","diner"].filter(r => maSemaine.items.some(i => i.repas === r));
+function genererPdfSemaine(items, titre) {
+  const repasActifs = ["petitdej","dej","diner"].filter(r => items.some(i => i.repas === r));
   const d = new Date();
-  let html = `<h1>🍽️ Mes menus de la semaine</h1>` +
+  let html = `<h1>🍽️ ${titre}</h1>` +
     `<p class="entete-pdf">Semaine ${numeroSemaine(d)} — générée le ${d.toLocaleDateString("fr-FR")} par MenuSaison${profil ? " — profil : " + profil.nom : ""}</p>`;
   html += `<table class="table-pdf"><thead><tr><th>Jour</th>` +
     repasActifs.map(r => `<th>${STRUCTURE_REPAS[r].label.replace(/^\S+\s/, "")}</th>`).join("") + "</tr></thead><tbody>";
   JOURS.forEach(jour => {
     html += `<tr><td class="jour-pdf">${jour}</td>`;
     repasActifs.forEach(repas => {
-      const items = maSemaine.items.filter(i => (i.jour === jour || i.jour === jour + " (s2)") && i.repas === repas);
-      html += `<td>` + (items.length ?
-        items.map(i => `<div class="cell-pdf"><a href="${i.lien || lienRecherche(i.nom)}">${i.nom}</a>${i.perso ? " (perso)" : ""}</div>`).join("")
+      const cellItems = items.filter(i => (i.jour === jour || i.jour === jour + " (s2)") && i.repas === repas);
+      html += `<td>` + (cellItems.length ?
+        cellItems.map(i => `<div class="cell-pdf"><a href="${i.lien || lienRecherche(i.nom)}">${i.nom}</a>${i.perso ? " (perso)" : ""}</div>`).join("")
         : "—") + "</td>";
     });
     html += "</tr>";
   });
   html += "</tbody></table>";
-  html += `<p class="pied-pdf">Chaque nom de recette est cliquable : il ouvre la fiche complète sur ${"Lidl Recettes"}. Astuce : dans la fenêtre d'impression, choisissez « Enregistrer au format PDF ».</p>`;
+  html += `<p class="pied-pdf">Chaque nom de recette est cliquable : il ouvre la fiche complète sur Lidl Recettes. Dans la fenêtre d'impression, choisissez « Enregistrer au format PDF ».</p>`;
   document.getElementById("zoneImpression").innerHTML = html;
   window.print();
+}
+
+document.getElementById("pdfSemaine").addEventListener("click", () => {
+  if (!maSemaine || !maSemaine.items.length) { alert("Votre semaine est vide : générez des suggestions et validez-les d'abord (bouton « ✅ Valider ma sélection »)."); return; }
+  genererPdfSemaine(maSemaine.items, "Mes menus de la semaine");
 });
 
 // Sauvegarde de la semaine + historique glissant (3 semaines passées + courante)
@@ -465,10 +469,15 @@ function afficherHistorique() {
   if (!semaines.length) { cont.innerHTML = "<p class='hint'>Aucune semaine sauvegardée pour le moment.</p>"; return; }
   cont.innerHTML = semaines.slice().reverse().map(s => {
     const nb = s.data.items.length;
-    return `<details class="hist-semaine"><summary>📅 ${s.label} — ${nb} repas</summary>` +
+    return `<details class="hist-semaine"><summary>📅 ${s.label} — ${nb} repas <button class="btn-pdf-hist" data-id="${s.id}" title="Télécharger cette semaine en PDF">📄 PDF</button></summary>` +
       s.data.items.map(i => `<div class="recette"><strong>${i.nom}</strong> <span class="hint">${i.jour} · ${STRUCTURE_REPAS[i.repas].label.replace(/^\S+\s/, "")}</span>${i.perso ? '<span class="tag">perso</span>' : ""}</div>`).join("") +
       "</details>";
   }).join("");
+  cont.querySelectorAll(".btn-pdf-hist").forEach(b => b.addEventListener("click", e => {
+    e.preventDefault();
+    const s = lireSemaines().find(x => x.id === b.dataset.id);
+    if (s) genererPdfSemaine(s.data.items, "Menus — " + s.label);
+  }));
 }
 afficherHistorique();
 
