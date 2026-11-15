@@ -1,0 +1,19 @@
+/* Impression / export PDF : uniquement la zone d'impression, en paysage */
+#zoneImpression { display: none; }
+
+@media print {
+  @page { size: A4 landscape; margin: 1cm; }
+  body { background: #fff; }
+  body > *:not(#zoneImpression) { display: none !important; }
+  #zoneImpression { display: block !important; }
+
+  #zoneImpression h1 { margin: 0 0 .2rem; font-size: 1.5rem; color: #3a7d44; }
+  .entete-pdf { margin: 0 0 .6rem; font-size: .85rem; color: #555; }
+  .table-pdf { width: 100%; border-collapse: collapse; table-layout: fixed; }
+  .table-pdf th, .table-pdf td { border: 1px solid #999; padding: .45rem .5rem; vertical-align: top; text-align: left; font-size: .85rem; }
+  .table-pdf thead th { background: #3a7d44; color: #fff; text-align: center; }
+  .table-pdf td.jour-pdf { background: #e8f2e9; font-weight: 700; width: 9%; text-align: center; vertical-align: middle; }
+  .cell-pdf { margin: .15rem 0; break-inside: avoid; }
+  .cell-pdf a { color: #1a5276; text-decoration: underline; }
+  .pied-pdf { margin-top: .5rem; font-size: .75rem; color: #777; font-style: italic; }
+}

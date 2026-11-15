@@ -421,6 +421,31 @@ document.getElementById("persoAjouter").addEventListener("click", () => {
   afficherSemaine();
 });
 
+// ---------- Export PDF (impression navigateur, liens conservés) ----------
+document.getElementById("pdfSemaine").addEventListener("click", () => {
+  if (!maSemaine || !maSemaine.items.length) { alert("Votre semaine est vide : générez des suggestions et validez-les d'abord."); return; }
+  const repasActifs = ["petitdej","dej","diner"].filter(r => maSemaine.items.some(i => i.repas === r));
+  const d = new Date();
+  let html = `<h1>🍽️ Mes menus de la semaine</h1>` +
+    `<p class="entete-pdf">Semaine ${numeroSemaine(d)} — générée le ${d.toLocaleDateString("fr-FR")} par MenuSaison${profil ? " — profil : " + profil.nom : ""}</p>`;
+  html += `<table class="table-pdf"><thead><tr><th>Jour</th>` +
+    repasActifs.map(r => `<th>${STRUCTURE_REPAS[r].label.replace(/^\S+\s/, "")}</th>`).join("") + "</tr></thead><tbody>";
+  JOURS.forEach(jour => {
+    html += `<tr><td class="jour-pdf">${jour}</td>`;
+    repasActifs.forEach(repas => {
+      const items = maSemaine.items.filter(i => (i.jour === jour || i.jour === jour + " (s2)") && i.repas === repas);
+      html += `<td>` + (items.length ?
+        items.map(i => `<div class="cell-pdf"><a href="${i.lien || lienRecherche(i.nom)}">${i.nom}</a>${i.perso ? " (perso)" : ""}</div>`).join("")
+        : "—") + "</td>";
+    });
+    html += "</tr>";
+  });
+  html += "</tbody></table>";
+  html += `<p class="pied-pdf">Chaque nom de recette est cliquable : il ouvre la fiche complète sur ${"Lidl Recettes"}. Astuce : dans la fenêtre d'impression, choisissez « Enregistrer au format PDF ».</p>`;
+  document.getElementById("zoneImpression").innerHTML = html;
+  window.print();
+});
+
 // Sauvegarde de la semaine + historique glissant (3 semaines passées + courante)
 document.getElementById("sauverSemaine").addEventListener("click", () => {
   if (!maSemaine || !maSemaine.items.length) { alert("Votre semaine est vide."); return; }
